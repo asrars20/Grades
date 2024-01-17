@@ -21,6 +21,6 @@ def generate_test_result_letter(student_data, template_path):
 test_data = load_test_data('ncempt_mock_test_data/test_data.json')
 
 # Generate letters for individual students
-template_path = 'path_to_template.docx'
+template_path = 'student_letter_template.docx'
 for student in test_data:
     generate_test_result_letter(student, template_path)
