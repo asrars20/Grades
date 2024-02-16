@@ -5,6 +5,12 @@ import datetime
 def load_test_data(file_path):
     with open(file_path, 'r') as file:
         return json.load(file)
+    except FileNotFoundError:
+        print(f"Error: The file {file_path} was not found.")
+        return []
+    except json.JSONDecodeError:
+        print(f"Error: Could not decode JSON from {file_path}.")
+        return []
 
 def replace_placeholders(paragraph, student_data):
     if 'current_date' in paragraph.text:
@@ -35,7 +41,11 @@ def replace_specific_table_placeholders(table, student_data):
                     cell.text = cell.text.replace(placeholder, str(student_data.get(placeholder, '')))
 
 def generate_test_result_letter(student_data, template_path):
-    doc = Document(template_path)
+    try:
+        doc = Document(template_path)
+    except FileNotFoundError:
+        print(f"Error: The template file {template_path} was not found.")
+        return
 
     # Replace data placeholders in paragraphs
     for paragraph in doc.paragraphs:
@@ -46,12 +56,24 @@ def generate_test_result_letter(student_data, template_path):
     for table in doc.tables:
         replace_specific_table_placeholders(table, student_data)
 
-    doc.save(f'result_letter_for_{student_data["Student Name"]}.docx')
+    output_filename = f'result_letter_for_{student_data.get("Student Name", "Unknown")}.docx'
+    try:
+        doc.save(output_filename)
+    except Exception as e:
+        print(f"Error saving document {output_filename}: {e}")
 
-# Load test data
-test_data = load_test_data('test_data.json')
+def main():
+    test_data = load_test_data('test_data.json')
+    if not test_data:
+        print("No test data loaded. Exiting...")
+        return
 
-# Generate letters for individual students
-template_path = 'student_letter_template.docx'
-for student in test_data:
-    generate_test_result_letter(student, template_path)
+    template_path = 'student_letter_template.docx'
+    for student in test_data:
+        if not isinstance(student, dict):
+            print("Invalid student data format. Skipping...")
+            continue
+        generate_test_result_letter(student, template_path)
+
+if __name__ == "__main__":
+    main()
